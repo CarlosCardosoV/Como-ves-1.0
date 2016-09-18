@@ -15,11 +15,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 
 
@@ -58,25 +61,33 @@ public class Revistas extends Fragment {
 
     private static final String KEY = "X-AUTHORIZATION";
     private static final String VALUE = "Bc3f9995e0321b7fe8a8de50318a392aadda6a42";
+
+    private String id_revista = "1";
     /**
      * ----------------
      **/
 
     /**
-     *Agregamos las variables de las categorias
+     * Agregamos las variables de las categorias
      ***/
 
     JSONObject jsonObject;
+
     List<String> nombre = new ArrayList<>(),
             keywords = new ArrayList<>(),
-            covers = new ArrayList<>(); //En estás listas guardarmos las diferentes categorias
+            covers = new ArrayList<>(),
+            id_categoria = new ArrayList(); //En estás listas guardarmos las diferentes categorias
+
+    String Url_buscar = "https://mipeiper.com/buscar?qr=",
+            url_comp = "&id=";
 
     public static List<Revista> revistaNatura = new ArrayList<>(), revistaRobots = new ArrayList<>(), revistaAnimal = new ArrayList<>();
 
-
+    String URL_Complete;
     private RecyclerView natura;
     private RecyclerView animal;
     private RecyclerView robots;
+    List<Categoria> cat = new ArrayList<>();
     String url = "https://mipeiper.com/api/v1/categories/1/";
 
     String respuesta;
@@ -99,9 +110,9 @@ public class Revistas extends Fragment {
         natura = (RecyclerView) getView().findViewById(R.id.natura);
         animal = (RecyclerView) getView().findViewById(R.id.animal);
         robots = (RecyclerView) getView().findViewById(R.id.robots);
-        natura.setHasFixedSize(true);
-        animal.setHasFixedSize(true);
-        robots.setHasFixedSize(true);
+        natura.setHasFixedSize(false);
+        animal.setHasFixedSize(false);
+        robots.setHasFixedSize(false);
         adaptadorAnimal = new AdaptadorRevistas(this, revistaAnimal);
         adaptadorNatura = new AdaptadorRevistas(this, revistaNatura);
         adaptadorRobots = new AdaptadorRevistas(this, revistaRobots);
@@ -111,46 +122,33 @@ public class Revistas extends Fragment {
         natura.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
         animal.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
         robots.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
-        for (int i = 0; i < 11; i++) {
 
-            Revista r = new Revista();
-
-            r.setTitulo("Revista " + String.valueOf(i));
-            r.setPortada(R.drawable.portada);
-            revistaAnimal.add(r);
-            Log.d("Agregando " + r.getTitulo(), String.valueOf(revistaAnimal.size()));
-            revistaNatura.add(r);
-            Log.d("Agregando " + r.getTitulo(), String.valueOf(revistaNatura.size()));
-            revistaRobots.add(r);
-            Log.d("Agregando " + r.getTitulo(), String.valueOf(revistaRobots.size()));
-            adaptadorAnimal.notifyDataSetChanged();
-            adaptadorNatura.notifyDataSetChanged();
-            adaptadorRobots.notifyDataSetChanged();
-
-
-
-
-
-
-
-            /*JsonObjectRequest peticion = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject jsonObject) {
-
-
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError volleyError) {
-
-                }
-            });
-
-        }*/
-
-        }
 
         new ConectarBackGround().execute(url, KEY, VALUE);
+
+
+    }
+
+
+    public void showProgressDialog() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(getActivity());
+            mProgressDialog.setMessage("cargando");
+            mProgressDialog.setIndeterminate(true);
+        }
+        mProgressDialog.show();
+    }
+
+    public void hideProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        hideProgressDialog();
     }
 
 
@@ -164,8 +162,9 @@ public class Revistas extends Fragment {
 
         @Override
         protected String doInBackground(String... params) {
-            try {
 
+
+            try {
                 HttpURLConnection connection = null;
                 String json = "";
                 URL url = new URL("https://mipeiper.com/api/v1/categories/1");
@@ -217,53 +216,162 @@ public class Revistas extends Fragment {
 
             }
 
-                        try{
-                            JSONArray categoria = jsonObject.getJSONArray("data");
-                            for(int i = 0; i<categoria.length(); i++){
-                                JSONObject categories = categoria.getJSONObject(i);
-                                String name = categories.getString("nombre");
-                                String key = categories.getString("keywords");
-                                String cvrs = categories.getString("covers");
+            try {
+                JSONArray categoria = jsonObject.getJSONArray("data");
+                for (int i = 0; i < categoria.length(); i++) {
+                    JSONObject categories = categoria.getJSONObject(i);
+                    String name = categories.getString("nombre");
+                    String key = categories.getString("keywords");
+                    String cvrs = categories.getString("covers");
+                    String id = categories.getString("id");
 
-                                nombre.add(name);
-                                Log.d("Agregando: "+name, String.valueOf(nombre.size()));
-                                keywords.add(key);
-                                Log.d("Agregando: "+key, String.valueOf(keywords.size()));
-                                covers.add(cvrs);
-                                Log.d("Agregando: "+cvrs, String.valueOf(covers.size()));
+                    nombre.add(name);
+                    Log.d("Agregando nombre: " + name, String.valueOf(nombre.size()));
+                    keywords.add(key);
+                    Log.d("Agregando keyword: " + key, String.valueOf(keywords.size()));
+                    covers.add(cvrs);
+                    Log.d("Agregando cover: " + cvrs, String.valueOf(covers.size()));
+                    id_categoria.add(id);
+                    Log.d("Agregando id: " + id, String.valueOf(id_categoria.size()));
+                }
+                new ObtenerRevistas().execute();
+            } catch (JSONException e) {
+                Log.e("ERROR JSON", e.getMessage());
+            }
 
-                            }
-                        }catch(JSONException e){
-                            Log.e("ERROR JSON", e.getMessage());
+        }
+    }
+
+
+    public class ObtenerRevistas extends AsyncTask<Void, Void, List> {
+
+
+        @Override
+        protected List doInBackground(Void... params) {
+            JSONArray jsonArray = null;
+
+            Categoria obj;
+
+            try {
+
+                for (int i = 0; i < keywords.size(); i++) {
+                    //int Time = 10000;
+                    URL_Complete = (Url_buscar + keywords.get(i) + url_comp + id_revista).trim();
+                    HttpURLConnection connection = null;
+                    String json = "";
+                    URL url = new URL(URL_Complete);
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET"); // Aquí ven que se especifica el tipo de petición al servidor.
+                    // Agrega el header con llave-valor
+                    //connection.addRequestProperty(KEY, VALUE);  // Aquí van las llaves para poder acceder.
+
+                    //connection.setReadTimeout(Time);
+                    //connection.setConnectTimeout(Time);
+                    connection.connect();
+                    if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {    // Si la conexión se logró
+                        BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                        // La linea de arriba prepara el buffer de datos para recibir lo que envia el servidor
+                        String line = null;
+                        StringBuilder sb = new StringBuilder();
+                        while ((line = br.readLine()) != null) {    //Proceso de lectura de datos y los agrega a line.
+                            sb.append(line);
+                        }
+                        br.close();
+                        json = sb.toString();
+                        Log.d("JSON Revistas: ", json);
+                        obj = new Categoria();
+                        obj.setJson(json);
+                        obj.setKeyword(keywords.get(i));
+                        cat.add(obj);
+                        Log.d("Lista", "JSON: "+cat.get(i).getJson() + " Key: " + cat.get(i).getKeyword());
+
+                    } else {
+                        Log.d("Conexion a  " + URL_Complete, connection.getResponseMessage());
+                    }
+
+                    connection.disconnect();
+
+                }
+                return cat;
+            } catch (Exception e) {
+                Log.e(MainActivity.class.toString(), e.getMessage());
+            }
+            return null;
+        }
+
+
+        @Override
+        protected void onPostExecute(List list) {
+            super.onPostExecute(list);
+            Categoria Objcat;
+
+            for(int i = 0; i <list.size(); i++){
+
+                Objcat = cat.get(i);
+
+                String keyw = Objcat.getKeyword();
+                String json = Objcat.getJson();
+
+                try {
+                    JSONArray jsonArray = new JSONArray(json);
+
+                    for(int j = 0; j < jsonArray.length(); j++){
+
+
+                        JSONObject rev = jsonArray.getJSONObject(j);
+
+                        String nombre = rev.getString("titulo_portada");
+                        String año = rev.getString("year");
+                        String views = rev.getString("views");
+                        int ejemplar = rev.getInt("ejemplar");
+
+                        Revista r = new Revista();
+                        r.setTitulo(nombre);
+                        r.setAño(año);
+                        r.setEjemplar(ejemplar);
+                        r.setPortada("https://www.mipeiper.com/cover/"+id_revista+"/Portada_"+String.valueOf(ejemplar)+".jpg");
+
+                        if (keyw.equals("natura")) {
+                            revistaNatura.add(r);
+                            Log.d("Agregando revista", nombre);
+                            adaptadorNatura.notifyDataSetChanged();
+                        }
+                        if (keyw.equals("Robots")) {
+                            revistaRobots.add(r);
+                            Log.d("Agregando revista", nombre);
+                            adaptadorRobots.notifyDataSetChanged();
                         }
 
+                        if (keyw.equals("Animal")) {
+                            revistaAnimal.add(r);
+                            Log.d("Agregando revista", nombre);
+                            adaptadorAnimal.notifyDataSetChanged();
+                        }
+                    }
+
+
+                }catch (Throwable T){
+
+                    Log.e("Revistas: " + keyw, "Could not parse malformed JSON: \"" + json + "\"");
+
+
+                }
+
+            }
+
         }
     }
-
-
-    
-
-
-    public void showProgressDialog() {
-        if (mProgressDialog == null) {
-            mProgressDialog = new ProgressDialog(getActivity());
-            mProgressDialog.setMessage("cargando");
-            mProgressDialog.setIndeterminate(true);
-        }
-        mProgressDialog.show();
-    }
-
-    public void hideProgressDialog() {
-        if (mProgressDialog != null && mProgressDialog.isShowing()) {
-            mProgressDialog.dismiss();
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        hideProgressDialog();
     }
 
 
-}
+
+
+
+
+
+
+
+
+
+
+

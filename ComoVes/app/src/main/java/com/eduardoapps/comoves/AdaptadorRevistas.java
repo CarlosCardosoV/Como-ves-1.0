@@ -19,9 +19,10 @@ public class AdaptadorRevistas extends RecyclerView.Adapter<AdaptadorRevistas.Re
 
     private List<Revista> listaRevistas;
     private Revistas revistas;
+    public ImageView portada;
 
     public class RevistaViewHolder extends RecyclerView.ViewHolder {
-        public ImageView portada;
+
         public TextView titulo_lista;
         public RevistaViewHolder(View v) {
             super(v);
@@ -50,9 +51,9 @@ public class AdaptadorRevistas extends RecyclerView.Adapter<AdaptadorRevistas.Re
     @Override
     public void onBindViewHolder(RevistaViewHolder holder, int position) {
 
-        holder.portada.setImageResource(listaRevistas.get(position).getPortada());
+
         holder.titulo_lista.setText(listaRevistas.get(position).getTitulo());
-        //Glide.with(revistas).load(items.get(position).getPortada()).into(small_portada);
+        Glide.with(revistas).load(listaRevistas.get(position).getPortada()).into(portada);
     }
 
     @Override

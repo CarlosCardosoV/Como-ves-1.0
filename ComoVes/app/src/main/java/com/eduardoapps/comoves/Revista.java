@@ -8,16 +8,16 @@ import android.graphics.Bitmap;
 public class Revista {
 
     int id_revista, reviews, views;
-    String titulo, descripcion, año;
-    int  portada, bigPortada;
+    String titulo, descripcion, año,portada;
+    int   bigPortada, ejemplar;
 
     public Revista(){}
 
-    public int getPortada() {
+    public String getPortada() {
         return portada;
     }
 
-    public void setPortada(int portada) {
+    public void setPortada(String portada) {
         this.portada = portada;
     }
 
@@ -76,4 +76,13 @@ public class Revista {
     public void setAño(String año) {
         this.año = año;
     }
+
+    public int getEjemplar() {
+        return ejemplar;
+    }
+
+    public void setEjemplar(int ejemplar) {
+        this.ejemplar = ejemplar;
+    }
 }
+
